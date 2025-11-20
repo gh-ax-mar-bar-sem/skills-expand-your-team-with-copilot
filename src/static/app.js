@@ -363,6 +363,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return "academic";
   }
 
+  // Function to handle social sharing
+  function handleShare(activityName, platform, details) {
+    const url = window.location.href;
+    const formattedSchedule = formatSchedule(details);
+    const text = `Check out ${activityName} at Mergington High School! ${details.description} Schedule: ${formattedSchedule}`;
+    const encodedText = encodeURIComponent(text);
+    const encodedUrl = encodeURIComponent(url);
+
+    let shareUrl = "";
+
+    switch (platform) {
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
+        break;
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+        break;
+      case "linkedin":
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case "email":
+        shareUrl = `mailto:?subject=${encodeURIComponent(
+          "Check out " + activityName
+        )}&body=${encodedText}%0A%0A${encodedUrl}`;
+        break;
+    }
+
+    if (shareUrl) {
+      if (platform === "email") {
+        window.location.href = shareUrl;
+      } else {
+        window.open(shareUrl, "_blank", "width=600,height=400");
+      }
+      showMessage(`Sharing ${activityName} via ${platform}!`, "success");
+    }
+  }
+
   // Function to fetch activities from API with optional day and time filters
   async function fetchActivities() {
     // Show loading skeletons first
@@ -528,6 +565,20 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
       ${capacityIndicator}
+      <div class="share-buttons">
+        <button class="share-button facebook" title="Share on Facebook" data-activity="${name}" data-platform="facebook">
+          📘
+        </button>
+        <button class="share-button twitter" title="Share on Twitter" data-activity="${name}" data-platform="twitter">
+          🐦
+        </button>
+        <button class="share-button linkedin" title="Share on LinkedIn" data-activity="${name}" data-platform="linkedin">
+          💼
+        </button>
+        <button class="share-button email" title="Share via Email" data-activity="${name}" data-platform="email">
+          ✉️
+        </button>
+      </div>
       <div class="participants-list">
         <h5>Current Participants:</h5>
         <ul>
@@ -570,6 +621,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       </div>
     `;
+
+    // Add click handlers for share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleShare(button.dataset.activity, button.dataset.platform, details);
+      });
+    });
 
     // Add click handlers for delete buttons
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
